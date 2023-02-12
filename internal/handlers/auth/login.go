@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/size12/gophermart/internal/entity"
-	"github.com/size12/gophermart/internal/storage"
+	"github.com/rasha108/gophermart/internal/entity"
+	"github.com/rasha108/gophermart/internal/storage"
 )
 
 func LoginHandler(s storage.Storage) http.HandlerFunc {

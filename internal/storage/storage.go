@@ -4,8 +4,8 @@ import (
 	"context"
 	"math/rand"
 
-	"github.com/size12/gophermart/internal/config"
-	"github.com/size12/gophermart/internal/entity"
+	"github.com/rasha108/gophermart/internal/config"
+	"github.com/rasha108/gophermart/internal/entity"
 )
 
 // Storage

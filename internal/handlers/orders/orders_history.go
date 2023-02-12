@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/size12/gophermart/internal/entity"
-	"github.com/size12/gophermart/internal/storage"
+	"github.com/rasha108bik/gophermart/internal/entity"
+	"github.com/rasha108bik/gophermart/internal/storage"
 )
 
 func HistoryHandler(s storage.Storage) http.HandlerFunc {
