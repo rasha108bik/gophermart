@@ -18,50 +18,47 @@ type Timer struct {
 	*sync.RWMutex
 }
 
-type WorkerPool struct {
+type AccrualProcessor struct {
 	jobs    chan models.Order
 	accrual AccrualSystem
 	storage storage.Storage
 	timer   Timer
 }
 
-func (w *WorkerPool) StartWorker() {
-	go func() {
-		for {
-			work := <-w.jobs
+func (w *AccrualProcessor) StartWorker() {
+	for {
+		work := <-w.jobs
 
-			w.timer.RLock()
-			timer := w.timer.Time
-			t := time.Until(timer)
-			w.timer.RUnlock()
+		w.timer.RLock()
+		timer := w.timer.Time
+		t := time.Until(timer)
+		w.timer.RUnlock()
 
-			if t.Milliseconds() > 0 {
-				time.Sleep(t)
-			}
+		if t.Milliseconds() > 0 {
+			time.Sleep(t)
+		}
 
-			newOrderInfo, sleep, err := w.accrual.GetOrderUpdates(work)
-			if err != nil {
-				w.storage.PushFrontOrders(work)
-				if sleep > 0 {
-					w.timer.Lock()
-					w.timer.Time = time.Now().Add(time.Duration(sleep) * time.Second)
-					w.timer.Unlock()
-				}
-			}
-
-			if newOrderInfo.Status != work.Status {
-				work.Accrual = newOrderInfo.Accrual
-				work.Status = newOrderInfo.Status
-				w.storage.UpdateOrders(context.Background(), work)
-			} else {
-				w.storage.PushBackOrders(work)
+		newOrderInfo, sleep, err := w.accrual.GetOrderUpdates(work)
+		if err != nil {
+			w.storage.PushFrontOrders(work)
+			if sleep > 0 {
+				w.timer.Lock()
+				w.timer.Time = time.Now().Add(time.Duration(sleep) * time.Second)
+				w.timer.Unlock()
 			}
 		}
-	}()
+
+		if newOrderInfo.Status != work.Status {
+			work.Accrual = newOrderInfo.Accrual
+			work.Status = newOrderInfo.Status
+			w.storage.UpdateOrders(context.Background(), work)
+		}
+		w.storage.PushBackOrders(work)
+	}
 }
 
 func NewWorkerPool(ctx context.Context, s storage.Storage, accrual AccrualSystem) {
-	pool := WorkerPool{
+	pool := AccrualProcessor{
 		jobs:    make(chan models.Order),
 		storage: s,
 		accrual: accrual,
@@ -71,7 +68,7 @@ func NewWorkerPool(ctx context.Context, s storage.Storage, accrual AccrualSystem
 		},
 	}
 
-	pool.StartWorker()
+	go pool.StartWorker()
 
 	for {
 		job, err := s.GetOrderForUpdate()
